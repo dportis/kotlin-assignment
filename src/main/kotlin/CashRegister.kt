@@ -15,14 +15,47 @@ class CashRegister(private val change: Change) {
      * @throws TransactionException If the transaction cannot be performed.
      */
     fun performTransaction(price: Long, amountPaid: Change): Change {
-        // TODO: Implement logic. Do not change the public interface of the performTransaction() function.
-        // if price is higher than the amountPaid, throw a transactionException
-        // if price is the same as the amountPaid, return Change.none
-        // determine the change needed by getting the value of the amountPaid and subtracting it from the price
-        // determine what change the register is currently holding
-        // go through each denomination starting from the highest and cycle through each bill to determine if it can be subtracted from the changeNeeded
+        val realPrice = price * 100
+        if (realPrice > amountPaid.total) throw TransactionException("Not enough for pay full price")
+            var changeNeeded = amountPaid.total - realPrice
+            val result = Change.none()
+            if (changeNeeded == 0L) {
+                return Change.none()
+            }
 
-        return Change.none()
+            for (denomination in Bill.values()) {
+                val countNeeded = (changeNeeded / denomination.minorValue).toInt()
+                val registerChange = change.getCount(denomination)
+
+                if (registerChange >= countNeeded) {
+                    result.add(denomination, countNeeded)
+                    changeNeeded -= denomination.minorValue.toLong() * countNeeded
+                    change.remove(denomination, countNeeded)
+                } else {
+                    result.add(denomination, registerChange)
+                    changeNeeded -= denomination.minorValue.toLong() * registerChange
+                    change.remove(denomination, registerChange)
+                }
+            }
+
+            for (coin in Coin.values()) {
+                val numOfCount = (changeNeeded / coin.minorValue).toInt()
+                val registerChange = change.getCount(coin)
+
+                if (registerChange >= numOfCount) {
+                    result.add(coin, numOfCount)
+                    changeNeeded -= coin.minorValue.toLong() * numOfCount
+                    change.remove(coin, numOfCount)
+                } else {
+                    result.add(coin, registerChange)
+                    changeNeeded -= coin.minorValue.toLong() * registerChange
+                    change.remove(coin, registerChange)
+                }
+            }
+
+        if (changeNeeded > 0) throw TransactionException("Not enough change to give back to customer")
+
+        return result
     }
 
     class TransactionException(message: String, cause: Throwable? = null) : Exception(message, cause)
