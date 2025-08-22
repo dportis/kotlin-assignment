@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class CashRegisterTest {
     @Test
-    fun testTransaction() {
+    fun testTransactionBills() {
         val register = CashRegister(Change.max())
         val price = 10L 
         val amountPaid = Change().apply { add(Bill.TWENTY_EURO, 1) }
@@ -15,7 +15,7 @@ class CashRegisterTest {
         assertEquals(1, result.getCount(Bill.TEN_EURO))    }
 
     @Test
-    fun test() {
+    fun testTransactionCoins() {
         val register = CashRegister(Change.max())
         val price = 17L
         val amountPaid = Change().apply { add(Bill.TWENTY_EURO, 1) }
@@ -45,5 +45,23 @@ class CashRegisterTest {
             register.performTransaction(price, amountPaid)
         }
     }
+
+    @Test
+    fun testLimitedChangeInRegister() {
+        val registerChange = Change().apply {
+            add(Bill.FIVE_EURO, 2)
+        }
+        val register = CashRegister(registerChange)
+
+        val price = 90L
+        val amountPaid = Change().apply { add(Bill.ONE_HUNDRED_EURO, 1) }
+
+        val result = register.performTransaction(price,amountPaid)
+
+
+        assertEquals(1000L, result.total)
+        assertEquals(result.getCount(Bill.FIVE_EURO), 2)
+    }
+
 
 }
